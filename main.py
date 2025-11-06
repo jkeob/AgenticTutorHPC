@@ -18,6 +18,7 @@ from prompts.quizzer_prompt import QUIZZER_PROMPT
 from prompts.coder_prompt import CODER_PROMPT
 from prompts.reviewer_prompt import REVIEWER_PROMPT
 from prompts.summarizer_prompt import SUMMARIZER_PROMPT
+from core.assistant import Assistant
 
 console = Console()
 install()
