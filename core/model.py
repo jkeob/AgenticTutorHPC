@@ -88,15 +88,29 @@ class LLMClient:
     system_prompt: str
     max_new_tokens: int
 
-    def _build_inputs(self, user_prompt: str) -> Any:
-        """
-        Create model-ready inputs from (system, user) messages.
-        """
+def _build_inputs(self, user_prompt: str) -> Any:
+    """
+    Create model-ready inputs using either the Assistant template or built-in processor templates.
+    """
+    # Try new Assistant chat template first
+    try:
+        assistant = Assistant(system_prompt=self.system_prompt)
+        rendered_prompt = assistant.build_input(user_prompt)
+
+        inputs = self.processor(
+            rendered_prompt,
+            return_tensors="pt",
+        ).to(self.hf_model.device)
+
+        return inputs
+    except Exception as e:
+        console.print(f"[yellow]⚠️ Assistant template failed ({e}), using fallback builder.[/]")
+        # --- fallback path: original code below ---
+
         rich_messages = [
             {"role": "system", "content": [{"type": "text", "text": self.system_prompt}]},
             {"role": "user",   "content": [{"type": "text", "text": user_prompt}]},
         ]
-
         simple_messages = _as_string_messages(self.system_prompt, user_prompt)
 
         def _to_model_inputs(msgs):
@@ -116,10 +130,7 @@ class LLMClient:
                 raw = _to_model_inputs(simple_messages)
         else:
             text = f"{self.system_prompt}\n\n{user_prompt}\n"
-            raw = self.processor(
-                text,
-                return_tensors="pt",
-            )
+            raw = self.processor(text, return_tensors="pt")
 
         inputs = {}
         for k, v in raw.items():
@@ -127,7 +138,9 @@ class LLMClient:
                 inputs[k] = v.to(self.hf_model.device)
             else:
                 inputs[k] = v
+
         return inputs
+
 
     def generate(self, user_prompt: str) -> str:
         #input = [
