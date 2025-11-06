@@ -93,6 +93,7 @@ def _build_inputs(self, user_prompt: str) -> Any:
     Create model-ready inputs using either the Assistant template or built-in processor templates.
     """
     # Try new Assistant chat template first
+    #This adds markers to the text consumed by the model
     try:
         assistant = Assistant(system_prompt=self.system_prompt)
         rendered_prompt = assistant.build_input(user_prompt)
@@ -105,7 +106,7 @@ def _build_inputs(self, user_prompt: str) -> Any:
         return inputs
     except Exception as e:
         console.print(f"[yellow]⚠️ Assistant template failed ({e}), using fallback builder.[/]")
-        # --- fallback path: original code below ---
+        # fallback path: original code below
 
         rich_messages = [
             {"role": "system", "content": [{"type": "text", "text": self.system_prompt}]},
